@@ -97,7 +97,7 @@ yc managed-kubernetes cluster get project-k8s --format=json \
 - production - запуск и обновление production среды
 ![Deploy pipeline](img/pipeline_deploy.png)
 
-### Адреса сред:
+### Адреса сред
 Rewiew-среда имеет динамический адрес.
 
 Staging http://staging.silentlair.tech
