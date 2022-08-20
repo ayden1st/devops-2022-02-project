@@ -1,0 +1,24 @@
+rmq_default_user:
+rmq_default_pass:
+
+registry_cred:
+
+ui:
+  image:
+    repository: garet2023.gitlab.yandexcloud.net:5050/cloud-team/search_engine_ui
+    tag: 1.0.0
+  service:
+    externalPort: 8000
+  replicas: 1
+  ingress:
+    host: dev.silentlair.tech
+
+crawler:
+  image:
+    repository: garet2023.gitlab.yandexcloud.net:5050/cloud-team/search_engine_crawler
+    tag: 1.0.0
+  replicas: 1
+
+mongodb:
+  auth:
+    enabled: false

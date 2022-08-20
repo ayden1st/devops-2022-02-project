@@ -1,0 +1,59 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    app: se
+    component: crawler
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas | default 1}}
+  selector:
+    matchLabels:
+      app: se
+      component: crawler
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      name: crawler-pod
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.service.internalPort }}"
+        prometheus.io/path: "/metrics"
+      labels:
+        app: se
+        component: crawler
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        name: crawler
+        env:
+        - name: MONGO
+          value: {{ .Values.databaseHost | default (printf "%s-mongodb" .Release.Name) }}
+        - name: RMQ_HOST
+          value: {{ .Values.rabbitmqHost | default (printf "%s-rabbitmq" .Release.Name) }}
+        - name: RMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key:  rmq_default_user
+              name: {{ .Release.Name }}-auth
+        - name: RMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key:  rmq_default_pass
+              name: {{ .Release.Name }}-auth
+        {{ if .Values.url }}
+        - name: URL
+          value: {{ .Values.url }}
+        {{ end }}
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1024Mi"
+            cpu: "1"
+      imagePullSecrets: 
+        - name: {{ .Release.Name }}-registry-credentials

@@ -1,0 +1,9 @@
+---
+apiVersion: v2
+appVersion: "1.0.0"
+name: ui
+version: 1.0.0
+description: OTUS application Search Engine UI
+maintainers:
+- name: ayden1st
+  email: ayden1st@example.com

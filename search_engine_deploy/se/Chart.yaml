@@ -1,0 +1,26 @@
+---
+apiVersion: v2
+appVersion: "1.0.0"
+name: se
+version: 0.1.0
+description: OTUS application Search Engine
+maintainers:
+- name: ayden1st
+  email: ayden1st@example.com
+
+dependencies:
+  - name: ui
+    version: "1.0.0"
+    repository: "file://../ui"
+
+  - name: crawler
+    version: "1.0.0"
+    repository: "file://../crawler"
+
+  - name: mongodb
+    version: "12.1.27"
+    repository: https://charts.bitnami.com/bitnami
+
+  - name: rabbitmq
+    version: "1.0.0"
+    repository: "file://../rabbitmq"

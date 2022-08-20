@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    app: se
+    component: rmq
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: se
+      component: rmq
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      name: rabbitmq-pod
+      labels:
+        app: se
+        component: rmq
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        name: rabbitmq
+        volumeMounts:
+          - name: rabbitmq-data
+            mountPath: /var/lib/rabbitmq/mnesia
+        env:
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                key:  rmq_default_user
+                name: {{ .Release.Name }}-auth
+          - name: RABBITMQ_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                key:  rmq_default_pass
+                name: {{ .Release.Name }}-auth
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        livenessProbe:
+          exec:
+            command: ["rabbitmq-diagnostics", "status"]
+          initialDelaySeconds: 120
+          periodSeconds: 60
+          timeoutSeconds: 15
+        readinessProbe: # probe to know when RMQ is ready to accept traffic
+          exec:
+            command: ["rabbitmq-diagnostics", "ping"]
+          initialDelaySeconds: 20
+          periodSeconds: 60
+          timeoutSeconds: 10
+      volumes:
+        - name: rabbitmq-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-{{ .Chart.Name }}

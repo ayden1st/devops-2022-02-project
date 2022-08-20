@@ -1,0 +1,8 @@
+cloud_id                 = "11111111111111111111"
+folder_id                = "11111111111111111111"
+zone                     = "ru-central1-a"
+service_account_key_file = "~/key.json"
+public_key_path          = "~/.ssh/rsa.pub"
+service_account_id       = "11111111111111111111"
+node_service_account_id  = "11111111111111111111"
+count_of_instances       = 1

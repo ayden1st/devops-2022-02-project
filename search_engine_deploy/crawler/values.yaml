@@ -1,0 +1,14 @@
+---
+image:
+  repository: ayden1st/se_crawler
+  tag: 1.0.0
+
+service:
+  internalPort: 8000
+
+databaseHost:
+rabbitmqHost:
+rabbitmqUser:
+rabbitmqPass:
+
+replicas:

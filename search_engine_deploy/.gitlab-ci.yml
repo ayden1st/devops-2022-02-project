@@ -1,0 +1,107 @@
+---
+variables:
+  CI_APPLICATION_REPOSITORY: $CI_REGISTRY_IMAGE
+  CI_APPLICATION_TAG: $CI_COMMIT_REF_SLUG
+  CI_CONTAINER_NAME: ci_job_build_${CI_JOB_ID}
+  DOMAIN: silentlair.tech
+
+stages:
+  - test
+  - staging
+  - production
+
+test:
+  stage: test
+  script:
+    - exit 0
+  only:
+    - triggers
+    - branches
+
+staging:
+  stage: staging
+  image: dtzar/helm-kubectl:3.9
+  script:
+    - kube_context
+    - ensure_namespace
+    - deploy
+  variables:
+    KUBE_NAMESPACE: staging
+    track: "${1-stable}"
+    name: "$CI_ENVIRONMENT_SLUG"
+    host: "$CI_ENVIRONMENT_SLUG.$DOMAIN"
+  environment:
+    name: staging
+    url: http://staging.$DOMAIN
+  only:
+    refs:
+      - master
+
+production:
+  stage: production
+  image: dtzar/helm-kubectl:3.9
+  script:
+    - kube_context
+    - ensure_namespace
+    - deploy
+  variables:
+    KUBE_NAMESPACE: production
+    track: "${1-stable}"
+    name: "$CI_ENVIRONMENT_SLUG"
+    host: "$CI_ENVIRONMENT_SLUG.$DOMAIN"
+  environment:
+    name: production
+    url: http://production.$DOMAIN
+  only:
+    refs:
+      - master
+
+.auto_devops: &auto_devops |
+  function ensure_namespace() {
+    kubectl describe namespace "$KUBE_NAMESPACE" || kubectl create namespace "$KUBE_NAMESPACE"
+  }
+
+  function kube_context() {
+    kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
+    kubectl config set-credentials admin --token="$KUBE_TOKEN"
+    kubectl config set-context default --cluster=k8s --user=admin
+    kubectl config use-context default
+  }
+
+  function deploy() {
+    track="${1-stable}"
+    name="$CI_ENVIRONMENT_SLUG"
+
+    if [[ "$track" != "stable" ]]; then
+      name="$name-$track"
+    fi
+
+    echo "Download helm dependencies..."
+    helm dep update se
+
+    export BASE_64_BASIC_AUTH_CREDENTIALS=$(echo -n "garet2022:$REGISTRY_TOKEN" | base64)
+
+    touch .dockerconfigjson
+
+    echo "{ \"auths\": { \"$CI_REGISTRY\": { \"auth\":\"$BASE_64_BASIC_AUTH_CREDENTIALS\" } } }" > .dockerconfigjson
+
+    UI_VERSION=$(curl --header "PRIVATE-TOKEN:$API_TOKEN" $CI_API_V4_URL/projects/3/repository/files/VERSION/raw?ref=master)
+    CRAWLER_VERSION=$(curl --header "PRIVATE-TOKEN:$API_TOKEN" $CI_API_V4_URL/projects/4/repository/files/VERSION/raw?ref=master)
+    
+    echo $UI_VERSION
+
+    echo "Deploy helm release $name to $KUBE_NAMESPACE"
+    helm upgrade --install \
+      --wait \
+      --set-file registry_cred=.dockerconfigjson \
+      --set ui.ingress.host="$host" \
+      --set ui.image.tag=$UI_VERSION \
+      --set crawler.image.tag=$CRAWLER_VERSION \
+      --namespace="$KUBE_NAMESPACE" \
+      --version="$CI_PIPELINE_ID-$CI_JOB_ID" \
+      "$name" \
+      se/
+  }
+
+before_script:
+  - *auto_devops
