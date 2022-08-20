@@ -52,6 +52,7 @@ yc iam key create --service-account-name admin --output ../key.json
     RUNNER_URL   - url gitlab
     RUNNER_TOKEN - токен для раннера
     SLACK_URL    - Webhook slack канала для алертов
+    GRAFANA_PASS - пароль для Grafana
 
 ### Установка инфраструктуры
 
